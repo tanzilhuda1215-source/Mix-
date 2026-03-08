@@ -24,10 +24,10 @@
 <body class="text-gray-800 h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-md py-4 px-6 flex justify-between items-center shrink-0">
-        <h1 class="text-xl font-bold"><i class="fas fa-file-alt mr-2"></i> Simulasi CPNS - TKP</h1>
-        <div id="timer-display" class="hidden text-lg font-semibold bg-blue-700 px-4 py-1 rounded-full border border-blue-400">
-            <i class="fas fa-clock mr-2"></i><span id="time-text">00:00</span>
+    <header class="bg-blue-600 text-white shadow-md py-2 px-4 md:py-4 md:px-6 flex justify-between items-center shrink-0">
+        <h1 class="text-base md:text-xl font-bold truncate"><i class="fas fa-file-alt mr-1 md:mr-2"></i> <span class="hidden sm:inline">Simulasi CPNS - TKP</span><span class="sm:hidden">Simulasi TKP</span></h1>
+        <div id="timer-display" class="hidden text-sm md:text-lg font-semibold bg-blue-700 px-3 py-1 md:px-4 rounded-full border border-blue-400 whitespace-nowrap ml-2">
+            <i class="fas fa-clock mr-1"></i><span id="time-text">00:00</span>
         </div>
     </header>
 
@@ -67,15 +67,15 @@
             </div>
             
             <!-- Navigation -->
-            <div class="flex justify-between mt-4 shrink-0">
-                <button onclick="prevQuestion()" id="btn-prev" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left mr-1"></i> Sebelumnya
+            <div class="flex justify-between mt-4 shrink-0 pb-10 md:pb-2 gap-2">
+                <button onclick="prevQuestion()" id="btn-prev" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 md:px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base flex-1 md:flex-none text-center">
+                    <i class="fas fa-chevron-left mr-1"></i> <span class="hidden sm:inline">Sebelumnya</span><span class="sm:hidden">Sebelum</span>
                 </button>
-                <button onclick="nextQuestion()" id="btn-next" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">
-                    Selanjutnya <i class="fas fa-chevron-right ml-1"></i>
+                <button onclick="nextQuestion()" id="btn-next" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 md:px-6 rounded-lg transition shadow-md text-sm md:text-base flex-1 md:flex-none text-center">
+                    <span class="hidden sm:inline">Selanjutnya</span><span class="sm:hidden">Lanjut</span> <i class="fas fa-chevron-right ml-1"></i>
                 </button>
-                <button onclick="confirmSubmit()" id="btn-submit" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">
-                    Selesai & Kumpulkan <i class="fas fa-check ml-1"></i>
+                <button onclick="confirmSubmit()" id="btn-submit" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 md:px-6 rounded-lg transition shadow-md text-sm md:text-base flex-1 md:flex-none text-center">
+                    <span class="hidden sm:inline">Selesai & Kumpulkan</span><span class="sm:hidden">Selesai</span> <i class="fas fa-check ml-1"></i>
                 </button>
             </div>
         </div>
