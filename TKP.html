@@ -59,7 +59,7 @@
                     <span class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Soal Nomor <span id="question-number" class="text-blue-600 font-bold text-lg">1</span> / 45</span>
                 </div>
                 
-                <p id="question-text" class="text-base mb-6 leading-relaxed text-gray-800 text-justify"></p>
+                <p id="question-text" class="text-sm mb-6 leading-relaxed text-gray-800 text-justify"></p>
                 
                 <div id="options-container" class="space-y-3">
                     <!-- Options injected via JS -->
@@ -774,7 +774,7 @@
                     <div class="flex-shrink-0 w-8 h-8 rounded-full border-2 ${isSelected ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 text-gray-500'} flex items-center justify-center font-bold mr-3 mt-0.5">
                         ${opt.id}
                     </div>
-                    <div class="text-base text-gray-700 mt-1">${opt.text}</div>
+                   <div class="text-sm text-gray-700 mt-1.5">${opt.text}</div>
                 `;
                 
                 optionsContainerEl.appendChild(btn);
