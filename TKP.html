@@ -92,8 +92,8 @@
                 <div class="bg-blue-50 rounded-xl p-6 border border-blue-100">
                     <p class="text-sm text-blue-600 font-semibold uppercase mb-1">Total Skor</p>
                     <div class="flex items-end justify-center">
-                        <span id="final-score" class="text-5xl font-bold text-blue-800">0</span>
-                        <span class="text-xl text-blue-600 mb-1 ml-1">/ 100</span>
+                    <span id="final-score" class="text-5xl font-bold text-blue-800">0</span>
+                    <span class="text-xl text-blue-600 mb-1 ml-1">/ <span id="max-score">225</span></span>
                     </div>
                 </div>
                 
@@ -843,7 +843,9 @@
             const avgTime = (timeSpentSeconds / questionsData.length).toFixed(1);
 
             // Display Results
+            const maxScorePossible = questionsData.length * 5;
             document.getElementById('final-score').textContent = totalScore;
+            document.getElementById('max-score').textContent = maxScorePossible;
             document.getElementById('avg-time').textContent = avgTime;
             
             quizView.classList.add('hidden');
