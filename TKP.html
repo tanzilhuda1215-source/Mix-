@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi CPNS - Tes Karakteristik Pribadi (TKP)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .option-btn { transition: all 0.2s ease-in-out; }
+        .option-btn:hover { transform: translateY(-2px); }
+        .selected-option { border-color: #3b82f6; background-color: #eff6ff; }
+        .correct-option { border-color: #10b981; background-color: #ecfdf5; color: #065f46;}
+        .wrong-option { border-color: #ef4444; background-color: #fef2f2; color: #991b1b;}
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md py-4 px-6 flex justify-between items-center shrink-0">
+        <h1 class="text-xl font-bold"><i class="fas fa-file-alt mr-2"></i> Simulasi CPNS - TKP</h1>
+        <div id="timer-display" class="hidden text-lg font-semibold bg-blue-700 px-4 py-1 rounded-full border border-blue-400">
+            <i class="fas fa-clock mr-2"></i><span id="time-text">00:00</span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow overflow-y-auto p-4 md:p-8 flex justify-center items-start">
+        
+        <!-- View 1: Setup -->
+        <div id="setup-view" class="bg-white rounded-xl shadow-lg p-8 w-full max-w-lg text-center mt-10">
+            <div class="mb-6 text-blue-500">
+                <i class="fas fa-stopwatch text-6xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Persiapan Simulasi</h2>
+            <p class="text-gray-600 mb-6">Terdapat 20 soal Tes Karakteristik Pribadi (TKP). Silakan tentukan alokasi waktu pengerjaan Anda.</p>
+            
+            <div class="mb-6 text-left">
+                <label for="time-input" class="block text-sm font-medium text-gray-700 mb-2">Alokasi Waktu (Menit):</label>
+                <input type="number" id="time-input" min="1" max="120" value="20" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-lg">
+            </div>
+            
+            <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-200 flex justify-center items-center">
+                Mulai Simulasi <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+
+        <!-- View 2: Quiz -->
+        <div id="quiz-view" class="hidden w-full max-w-3xl flex flex-col h-full">
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-4 flex-grow">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <span class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Soal Nomor <span id="question-number" class="text-blue-600 font-bold text-lg">1</span> / 20</span>
+                </div>
+                
+                <p id="question-text" class="text-lg mb-6 leading-relaxed text-gray-800 text-justify"></p>
+                
+                <div id="options-container" class="space-y-3">
+                    <!-- Options injected via JS -->
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="flex justify-between mt-4 shrink-0">
+                <button onclick="prevQuestion()" id="btn-prev" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left mr-1"></i> Sebelumnya
+                </button>
+                <button onclick="nextQuestion()" id="btn-next" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">
+                    Selanjutnya <i class="fas fa-chevron-right ml-1"></i>
+                </button>
+                <button onclick="confirmSubmit()" id="btn-submit" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">
+                    Selesai & Kumpulkan <i class="fas fa-check ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- View 3: Result -->
+        <div id="result-view" class="hidden bg-white rounded-xl shadow-lg p-8 w-full max-w-2xl text-center mt-10">
+            <div class="mb-4">
+                <i class="fas fa-trophy text-yellow-400 text-6xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold mb-2">Simulasi Selesai!</h2>
+            <p class="text-gray-600 mb-8">Berikut adalah ringkasan hasil pengerjaan Anda.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 rounded-xl p-6 border border-blue-100">
+                    <p class="text-sm text-blue-600 font-semibold uppercase mb-1">Total Skor</p>
+                    <div class="flex items-end justify-center">
+                        <span id="final-score" class="text-5xl font-bold text-blue-800">0</span>
+                        <span class="text-xl text-blue-600 mb-1 ml-1">/ 100</span>
+                    </div>
+                </div>
+                
+                <div class="bg-purple-50 rounded-xl p-6 border border-purple-100">
+                    <p class="text-sm text-purple-600 font-semibold uppercase mb-1">Rata-rata Waktu / Soal</p>
+                    <div class="flex items-end justify-center">
+                        <span id="avg-time" class="text-5xl font-bold text-purple-800">0</span>
+                        <span class="text-xl text-purple-600 mb-1 ml-2">Detik</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="showReview()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-lg shadow transition duration-200">
+                <i class="fas fa-list-check mr-2"></i> Lihat Pembahasan Detail
+            </button>
+        </div>
+
+        <!-- View 4: Review -->
+        <div id="review-view" class="hidden w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800"><i class="fas fa-book-open mr-2 text-blue-600"></i> Pembahasan Soal</h2>
+                <button onclick="location.reload()" class="text-blue-600 hover:text-blue-800 font-semibold"><i class="fas fa-redo mr-1"></i> Ulangi Simulasi</button>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-yellow-200 mb-6 flex items-start">
+                <i class="fas fa-info-circle text-yellow-500 mt-1 mr-3 text-lg"></i>
+                <p class="text-sm text-gray-700">Dalam Tes Karakteristik Pribadi (TKP), tidak ada jawaban mutlak salah. Opsi dengan skor tertinggi (5) ditandai <span class="font-bold text-green-600">Hijau (Benar)</span>. Jika jawaban Anda bukan skor 5, maka ditandai <span class="font-bold text-red-500">Merah (Kurang Tepat)</span>.</p>
+            </div>
+            <div id="review-container" class="space-y-6 pb-10">
+                <!-- Reviews injected via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Konfirmasi -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-bold mb-4">Kumpulkan Jawaban?</h3>
+            <p class="text-gray-600 mb-6 text-sm">Anda yakin ingin mengakhiri simulasi? Waktu Anda akan dihentikan dan nilai akan dihitung.</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">Batal</button>
+                <button onclick="submitQuiz()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Ya, Kumpulkan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Soal dari Prompt
+        const questionsData = [
+            {
+                id: 66,
+                text: "Sebagai kepala Dinas Sosial, Anda ingin membangun sistem pengaduan yang cepat dan responsif untuk menangani keluhan warga terkait layanan publik. Dalam membangun sistem tersebut, tindakan apa yang sebaiknya Anda ambil? (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Mengembangkan aplikasi pengaduan online yang memungkinkan warga menyampaikan keluhan kapan saja.", score: 4 },
+                    { id: "B", text: "Menugaskan petugas khusus untuk mencatat keluhan warga secara manual di kantor pelayanan.", score: 3 },
+                    { id: "C", text: "Menunggu arahan dari atasan sebelum mengambil langkah untuk memperbaiki sistem pengaduan.", score: 1 },
+                    { id: "D", text: "Membentuk tim respons cepat yang bertugas menerima dan menindaklanjuti pengaduan warga secara langsung.", score: 5 },
+                    { id: "E", text: "Mengandalkan survei tahunan untuk mengetahui jenis keluhan yang paling sering terjadi.", score: 2 }
+                ],
+                pembahasan: "Pilihan terbaik adalah D karena membentuk tim respons cepat menunjukkan langkah proaktif untuk menangani keluhan secara langsung dan memastikan warga merasa didengar dan dilayani. Langkah ini mencerminkan nilai Profesionalisme dan Berorientasi Pelayanan sehingga mendapat skor 5. Pilihan A mendapat skor 4 karena aplikasi online mempermudah akses tetapi tidak menjamin penanganan cepat. Pilihan B skor 3 karena manual kurang efisien. Pilihan E skor 2 karena survei tahunan tidak real-time. Pilihan C skor 1 karena bersikap pasif menunggu arahan."
+            },
+            {
+                id: 67,
+                text: "Sebagai kepala puskesmas, Anda menghadapi tantangan kurangnya anggaran untuk menyediakan alat kesehatan yang memadai bagi masyarakat. Anda ingin mencari solusi untuk meningkatkan pelayanan kesehatan di wilayah Anda. Dalam menghadapi masalah kurangnya anggaran tersebut, tindakan apa yang sebaiknya Anda ambil? (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Mengurangi layanan yang tidak mendesak agar anggaran dapat digunakan untuk kebutuhan alat kesehatan.", score: 2 },
+                    { id: "B", text: "Mengajukan kerja sama dengan pihak swasta atau lembaga donatur untuk mendukung penyediaan alat kesehatan.", score: 5 },
+                    { id: "C", text: "Mengalihkan anggaran dari kebutuhan operasional lain tanpa mempertimbangkan dampaknya pada pelayanan.", score: 1 },
+                    { id: "D", text: "Membuat laporan kepada instansi pemerintah terkait agar anggaran tambahan segera diberikan.", score: 4 },
+                    { id: "E", text: "Menggunakan alat kesehatan yang tersedia sambil menunggu pengadaan anggaran baru.", score: 3 }
+                ],
+                pembahasan: "Pilihan terbaik adalah B karena mengajukan kerja sama menunjukkan sikap proaktif dan inovatif tanpa mengurangi kualitas pelayanan (Skor 5). Pilihan D skor 4 karena formal dan bertanggung jawab namun butuh waktu. Pilihan E skor 3 karena menggunakan alat yang ada cukup bertanggung jawab tapi bukan solusi jangka panjang. Pilihan A skor 2 karena mengurangi layanan bisa timbulkan ketidakpuasan. Pilihan C skor 1 karena alih anggaran tanpa pertimbangan bisa ganggu operasional."
+            },
+            {
+                id: 68,
+                text: "Di tengah antrean panjang di loket pelayanan instansi Anda, seorang ibu datang meminta bantuan terkait dokumen yang ternyata bukan wewenang bidang Anda. Sikap terbaik yang Anda ambil adalah ... (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Memberi tahu ibu tersebut bahwa dokumen yang dimaksud bukan tanggung jawab bidang Anda dan memintanya mencari informasi di bidang lain.", score: 2 },
+                    { id: "B", text: "Menjelaskan bahwa dokumen tersebut bukan wewenang Anda dan mengarahkan ibu tersebut ke bidang yang sesuai.", score: 5 },
+                    { id: "C", text: "Meminta ibu tersebut menunggu hingga Anda selesai melayani antrean untuk membantu mencarikan solusi.", score: 4 },
+                    { id: "D", text: "Menunda membantu ibu tersebut karena Anda harus menyelesaikan antrean yang ada terlebih dahulu.", score: 3 },
+                    { id: "E", text: "Menyuruh ibu tersebut bertanya ke petugas lain tanpa memberikan penjelasan lebih lanjut.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah B karena menjelaskan dengan baik sambil mengarahkan mencerminkan empati dan tanggung jawab layanan (Skor 5). Pilihan C skor 4, niat baik tapi kurang efisien bagi ibu tersebut. Pilihan D skor 3, fokus antrean positif tapi ibu merasa tidak dilayani. Pilihan A skor 2, kurang peduli karena tidak ada arahan jelas. Pilihan E skor 1, menyuruh tanpa penjelasan mencerminkan sikap tidak peduli."
+            },
+            {
+                id: 69,
+                text: "Sebuah kota menghadapi polusi udara akibat urbanisasi. Pemerintah mendapat usulan memperluas ruang hijau dengan menanam pohon, tetapi lahan yang tersedia juga diperlukan untuk infrastruktur dan hunian. Apa sikap yang sebaiknya diambil oleh pemerintah kota? (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Meninjau ulang kebijakan pembangunan dan mempertimbangkan penggunaan lahan ganda untuk ruang hijau dan infrastruktur.", score: 2 },
+                    { id: "B", text: "Melibatkan masyarakat dalam musyawarah untuk menentukan prioritas antara ruang hijau dan infrastruktur.", score: 4 },
+                    { id: "C", text: "Mengalokasikan lahan yang tersedia untuk penanaman pohon dan mengevaluasi alternatif lain untuk pembangunan infrastruktur atau hunian.", score: 5 },
+                    { id: "D", text: "Memprioritaskan pembangunan infrastruktur dengan membatalkan rencana penanaman pohon.", score: 1 },
+                    { id: "E", text: "Menggunakan sebagian lahan untuk penanaman pohon sambil mencari lokasi alternatif untuk infrastruktur atau hunian.", score: 3 }
+                ],
+                pembahasan: "Pilihan terbaik adalah C karena mengalokasikan lahan untuk penghijauan sekaligus mengevaluasi alternatif menunjukkan sikap profesional, tanggung jawab lingkungan, dan efektif tangani polusi (Skor 5). Pilihan B skor 4 karena melibatkan partisipasi namun kurang fokus solusi langsung. Pilihan E skor 3 karena mengakomodasi keduanya tapi kurang strategis menyeluruh. Pilihan A skor 2 karena lahan ganda sering tidak praktis. Pilihan D skor 1 karena mengabaikan urgensi polusi."
+            },
+            {
+                id: 70,
+                text: "Sebagai Kepala Dinas Perhubungan, Anda menyadari bahwa jalur bus di kota Anda sering mengalami kemacetan parah pada jam sibuk, sehingga banyak penumpang terlambat sampai ke tujuan. Hal ini menimbulkan keluhan dari masyarakat. Sebagai Kepala Dinas, langkah terbaik yang dapat Anda ambil adalah... (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Meminta masyarakat untuk menggunakan transportasi lain saat jam sibuk untuk mengurangi beban jalur bus.", score: 3 },
+                    { id: "B", text: "Mengusulkan pembangunan jalur khusus bus di beberapa ruas jalan utama, meskipun membutuhkan waktu lebih lama untuk merealisasikannya.", score: 4 },
+                    { id: "C", text: "Menyusun sistem pengaturan waktu keberangkatan bus yang lebih efisien untuk mengurangi waktu tunggu penumpang di jalan.", score: 5 },
+                    { id: "D", text: "Memasang pemberitahuan kepada masyarakat tentang jam-jam kemacetan agar mereka bisa lebih bersabar.", score: 2 },
+                    { id: "E", text: "Membiarkan kondisi tersebut berjalan tanpa perubahan karena keterbatasan anggaran saat ini.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah C karena menyusun pengaturan waktu keberangkatan yang efisien memanfaatkan sumber daya optimal dan mengurangi waktu tunggu (Skor 5). Pilihan B skor 4, solusi jangka panjang yang baik tapi butuh waktu. Pilihan A skor 3, alternatif yang membantu sebagian orang tapi tak selesaikan akar masalah. Pilihan D skor 2, hanya informatif. Pilihan E skor 1, sikap pasif dan tak bertanggung jawab."
+            },
+            {
+                id: 71,
+                text: "Anda bekerja sebagai petugas loket di kantor pelayanan pajak. Seorang wajib pajak menyampaikan keluhan tentang sistem pembayaran online yang sering mengalami gangguan. Namun, Anda bertugas di bagian informasi, bukan bagian teknis yang menangani sistem tersebut. Apa yang sebaiknya Anda lakukan? (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Mendengarkan keluhan wajib pajak dan mencoba memahami gangguan teknis tersebut.", score: 4 },
+                    { id: "B", text: "Tidak menanggapi karena masalah tersebut berada di luar tanggung jawab Anda.", score: 1 },
+                    { id: "C", text: "Menenangkan wajib pajak sambil mencatat keluhan untuk disampaikan ke bagian terkait.", score: 5 },
+                    { id: "D", text: "Menggunakan keluhan tersebut untuk mengevaluasi cara Anda memberikan informasi kepada wajib pajak.", score: 3 },
+                    { id: "E", text: "Menyarankan wajib pajak menghubungi bagian IT secara langsung untuk menyelesaikan masalahnya.", score: 2 }
+                ],
+                pembahasan: "Pilihan terbaik adalah C karena menenangkan dan mencatat keluhan untuk diteruskan ke teknisi menunjukkan empati, tanggung jawab, dan kepedulian (Skor 5). Pilihan A skor 4, peduli tapi bisa memperlambat karena bukan bidang Anda. Pilihan D skor 3, evaluasi diri baik tapi tak langsung selesaikan masalah wajib pajak. Pilihan E skor 2, menyuruh langsung ke IT kurang peduli. Pilihan B skor 1, pasif dan tidak bertanggung jawab."
+            },
+            {
+                id: 72,
+                text: "Sebagai petugas layanan pelanggan di sebuah rumah sakit pemerintah, Anda menerima keluhan dari seorang pasien yang merasa frustrasi karena antrean layanan pendaftaran terlalu lama. Pasien tersebut mulai berbicara dengan nada tinggi.Sikap Anda... (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Menjelaskan kepada pasien bahwa antrean panjang adalah hal yang wajar di jam sibuk.", score: 3 },
+                    { id: "B", text: "Menenangkan pasien dengan mendengarkan keluhannya terlebih dahulu sebelum memberikan solusi.", score: 5 },
+                    { id: "C", text: "Meminta pasien untuk bersabar sambil Anda menyelesaikan tugas lain terlebih dahulu.", score: 2 },
+                    { id: "D", text: "Menawarkan solusi dengan menjelaskan sistem antrean dan membantu pasien mendaftarkan diri dengan cara yang lebih cepat.", score: 4 },
+                    { id: "E", text: "Mengabaikan keluhan pasien karena Anda merasa itu bukan tanggung jawab Anda.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah B karena menenangkan dengan mendengarkan menunjukkan empati tinggi dan orientasi pelayanan (Skor 5). Pilihan D skor 4, solusi langsung bagus tapi butuh empati di awal saat pasien emosi. Pilihan A skor 3, penjelasan wajar tapi bisa dianggap kurang responsif. Pilihan C skor 2, meminta sabar tanpa tindakan menunjukkan kurang peduli. Pilihan E skor 1, mengabaikan adalah tindakan tidak profesional."
+            },
+            {
+                id: 73,
+                text: "Sebagai seorang perawat di instalasi gawat darurat, Anda menghadapi seorang pasien yang datang dengan kondisi darurat dan memohon untuk segera ditangani. Namun, pasien tersebut tidak membawa identitas dan tidak mampu memberikan jaminan pembayaran. Apa langkah terbaik yang Anda lakukan? (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Menjelaskan kepada pasien bahwa identitas atau jaminan pembayaran diperlukan sebelum layanan dapat diberikan.", score: 3 },
+                    { id: "B", text: "Berempati kepada pasien, tetapi meminta pasien mencari solusi keuangan terlebih dahulu sebelum mendapatkan layanan.", score: 2 },
+                    { id: "C", text: "Menenangkan pasien dan mengutamakan penanganan darurat sesuai prosedur sambil mengupayakan solusi administrasi.", score: 5 },
+                    { id: "D", text: "Meminta pasien untuk tenang dan menunggu hingga identitas atau jaminan pembayarannya tersedia.", score: 1 },
+                    { id: "E", text: "Melaporkan situasi ini kepada atasan untuk meminta arahan lebih lanjut sebelum bertindak.", score: 4 }
+                ],
+                pembahasan: "Pilihan terbaik adalah C karena dalam gawat darurat, nyawa/keselamatan diutamakan sesuai prinsip kesehatan (Skor 5). Pilihan E skor 4, lapor atasan bertanggung jawab tapi bisa tunda penanganan darurat. Pilihan A skor 3, profesional sampaikan syarat tapi abai pada keselamatan pasien. Pilihan B skor 2, empati tapi tetap menolak tangani darurat. Pilihan D skor 1, menyuruh nunggu hingga ada jaminan bertentangan dengan sumpah medis."
+            },
+            {
+                id: 74,
+                text: "Pemerintah daerah berencana memperluas fasilitas umum di sebuah kota untuk meningkatkan pelayanan publik. Namun, rencana ini akan mengurangi lahan parkir yang sering digunakan warga sekitar. Banyak warga menyampaikan keluhan atas rencana ini. Apa langkah terbaik yang sebaiknya diambil pemerintah daerah? (Pelayanan Publik)",
+                options: [
+                    { id: "A", text: "Melanjutkan proyek tanpa menanggapi keluhan warga karena manfaatnya lebih besar untuk masyarakat luas.", score: 2 },
+                    { id: "B", text: "Menunda proyek hingga ada anggaran tambahan untuk membangun fasilitas parkir pengganti.", score: 4 },
+                    { id: "C", text: "Membuat keputusan sepihak untuk memperluas fasilitas umum tanpa memberi tahu warga.", score: 1 },
+                    { id: "D", text: "Mengadakan pertemuan dengan warga untuk menjelaskan manfaat perluasan fasilitas umum dan mencari solusi bersama.", score: 5 },
+                    { id: "E", text: "Mengurangi skala proyek agar lahan parkir tetap tersedia meskipun fasilitas umum tidak maksimal.", score: 3 }
+                ],
+                pembahasan: "Pilihan terbaik adalah D karena pertemuan dengan warga ciptakan dialog, transparansi, dan solusi bersama (Skor 5). Pilihan B skor 4, tanggung jawab cari ganti lahan parkir walau proyek melambat. Pilihan E skor 3, kompromi tapi fungsi fasilitas tak maksimal. Pilihan A skor 2, abaikan dampak sosial warga sekitar. Pilihan C skor 1, keputusan sepihak memicu konflik dan tidak transparan."
+            },
+            {
+                id: 75,
+                text: "Anda adalah seorang pegawai tetap di sebuah instansi pemerintah yang mendapatkan kesempatan untuk mengikuti pelatihan manajemen dari sebuah lembaga pelatihan ternama. Selama pelatihan, lembaga tersebut menawarkan Anda untuk menjadi konsultan paruh waktu bagi mereka, meskipun Anda masih terikat dengan pekerjaan penuh waktu di instansi Anda. Apa sikap terbaik yang sebaiknya Anda ambil? (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Menolak tawaran tersebut untuk menjaga fokus dan loyalitas terhadap pekerjaan utama Anda di instansi.", score: 4 },
+                    { id: "B", text: "Menerima tawaran tersebut tanpa memberitahu instansi Anda, karena ini adalah kesempatan pribadi.", score: 1 },
+                    { id: "C", text: "Mendiskusikan tawaran tersebut dengan atasan Anda untuk memastikan tidak ada konflik kepentingan.", score: 5 },
+                    { id: "D", text: "Menerima tawaran tersebut dengan syarat Anda hanya bekerja di luar jam kerja utama.", score: 3 },
+                    { id: "E", text: "Mengabaikan tawaran tersebut karena tidak relevan dengan tugas Anda di instansi pemerintah.", score: 2 }
+                ],
+                pembahasan: "Pilihan terbaik adalah C karena berdiskusi dengan atasan cegah konflik kepentingan, menunjukkan akuntabilitas (Skor 5). Pilihan A skor 4, jaga fokus sangat baik, tapi mungkin hilangkan peluang legal jika diizinkan. Pilihan D skor 3, di luar jam kerja oke tapi berisiko jika tak izin/transparan. Pilihan E skor 2, pasif. Pilihan B skor 1, tidak transparan dan melanggar aturan kepegawaian."
+            },
+            {
+                id: 76,
+                text: "Hari ini Anda diminta atasan untuk mengulang laporan yang sudah Anda kerjakan, meskipun sebelumnya laporan tersebut dinyatakan sesuai dengan ekspektasi. Atasan juga memberikan komentar yang kurang ramah terkait hasil kerja Anda. Padahal, Anda telah merasa memberikan upaya terbaik dalam menyelesaikan tugas tersebut. Apa sikap terbaik yang Anda ambil? (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Anda menolak permintaan tersebut agar atasan memahami bahwa laporan Anda sudah sesuai.", score: 1 },
+                    { id: "B", text: "Anda melampiaskan kekesalan dengan mengulang laporan tanpa memperhatikan kualitas.", score: 2 },
+                    { id: "C", text: "Anda menerima permintaan tersebut sambil mencari cara agar atasan menyadari kualitas kerja Anda.", score: 3 },
+                    { id: "D", text: "Anda meminta penjelasan lebih rinci tentang kekurangan laporan untuk memperbaikinya sesuai harapan.", score: 5 },
+                    { id: "E", text: "Anda mempelajari pola kerja atasan untuk menyesuaikan pendekatan kerja di masa mendatang.", score: 4 }
+                ],
+                pembahasan: "Pilihan terbaik adalah D karena meminta penjelasan rinci berorientasi pada solusi perbaikan laporan sesuai standar atasan (Skor 5). Pilihan E skor 4, adaptabilitas yang baik untuk ke depan. Pilihan C skor 3, inisiatif terima tugas tapi motifnya sekadar pembuktian. Pilihan B skor 2, emosional dan korbankan kualitas kerja. Pilihan A skor 1, defensif dan berpotensi merusak relasi kerja."
+            },
+            {
+                id: 77,
+                text: "Sebagai koordinator program di sebuah kementerian, Anda mempresentasikan ide untuk meningkatkan partisipasi masyarakat dalam pengambilan keputusan publik. Namun, rekan senior dan atasan menganggap ide Anda terlalu idealis dan sulit diterapkan. Apa sikap terbaik yang sebaiknya Anda ambil? (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Menunda pembahasan lebih lanjut dan meminta waktu tambahan untuk menyempurnakan konsep tersebut.", score: 3 },
+                    { id: "B", text: "Menerima kritik tanpa memberikan penjelasan atau membela konsep yang Anda usulkan.", score: 2 },
+                    { id: "C", text: "Mengabaikan kritik karena merasa yakin ide Anda sudah cukup matang untuk diterapkan.", score: 1 },
+                    { id: "D", text: "Mengusulkan untuk membentuk tim kecil guna mengkaji lebih dalam konsep tersebut dan memberikan masukan tambahan.", score: 4 },
+                    { id: "E", text: "Mendengarkan masukan dari rekan dan atasan, lalu menjelaskan bagaimana ide Anda dapat diimplementasikan dengan pendekatan realistis.", score: 5 }
+                ],
+                pembahasan: "Pilihan terbaik adalah E karena mendengarkan dengan tenang lalu menjelaskan pendekatan realistis menunjukkan sikap percaya diri, terbuka, namun tetap mempertahankan ide secara profesional (Skor 5). Pilihan D skor 4, bagus untuk kolaborasi tapi butuh waktu lama. Pilihan A skor 3, kurang efektif di forum saat itu juga. Pilihan B skor 2, pasif dan kurang percaya diri. Pilihan C skor 1, defensif dan tutup telinga dari masukan."
+            },
+            {
+                id: 78,
+                text: "Anda ditunjuk untuk memimpin sebuah proyek besar yang sangat penting bagi perusahaan. Karena ingin memberikan hasil terbaik, Anda bekerja tanpa henti, bahkan hingga larut malam setiap hari. Akibatnya, Anda jatuh sakit sebelum proyek selesai. Sikap Anda adalah...(Profesionalisme)",
+                options: [
+                    { id: "A", text: "Memaksakan diri untuk terus bekerja meskipun dalam kondisi sakit demi menyelesaikan proyek tepat waktu.", score: 2 },
+                    { id: "B", text: "Meminta atasan untuk menggantikan Anda sebagai pemimpin proyek karena tidak sanggup melanjutkan pekerjaan.", score: 3 },
+                    { id: "C", text: "Melanjutkan pekerjaan sambil mengurangi intensitas kerja tanpa memberi tahu tim bahwa Anda sedang sakit.", score: 4 },
+                    { id: "D", text: "Beristirahat sementara dan mendelegasikan tanggung jawab kepada anggota tim agar proyek tetap berjalan.", score: 5 },
+                    { id: "E", text: "Mengabaikan kondisi kesehatan dan tetap bekerja hingga proyek selesai untuk menunjukkan dedikasi.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah D karena istirahat dan mendelegasikan tugas pastikan proyek tetap jalan sekaligus peduli pada kesehatan pribadi (Skor 5). Pilihan C skor 4, kurangi intensitas baik tapi tidak transparan bisa ganggu kolaborasi. Pilihan B skor 3, akui batas diri tapi berisiko tunda proyek total. Pilihan A skor 2, paksakan diri turunkan produktivitas. Pilihan E skor 1, paling tidak peduli kesehatan, bahaya bagi diri dan proyek."
+            },
+            {
+                id: 79,
+                text: "Sebuah kantor pelayanan publik menerapkan kebijakan baru yang mengharuskan masyarakat membayar biaya tambahan untuk layanan tertentu. Kebijakan ini menimbulkan keluhan karena masyarakat merasa tidak ada transparansi mengenai alasan penambahan biaya tersebut. Sebagai pegawai di kantor tersebut, apa langkah terbaik yang Anda lakukan? (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Menginformasikan kepada masyarakat bahwa kebijakan tersebut sudah menjadi aturan resmi yang harus diikuti.", score: 2 },
+                    { id: "B", text: "Menjelaskan secara transparan alasan kebijakan tersebut dan mendengarkan keluhan masyarakat untuk disampaikan kepada atasan.", score: 5 },
+                    { id: "C", text: "Membuat laporan resmi kepada pimpinan tentang dampak negatif kebijakan tersebut terhadap kepuasan masyarakat.", score: 4 },
+                    { id: "D", text: "Menolak melaksanakan kebijakan tersebut karena tidak sesuai dengan prinsip pelayanan publik yang baik.", score: 1 },
+                    { id: "E", text: "Mengedukasi masyarakat tentang kebijakan baru ini dengan fokus pada manfaat yang dapat diperoleh meskipun kebijakan dianggap merugikan.", score: 3 }
+                ],
+                pembahasan: "Pilihan terbaik adalah B karena penjelasan transparan dan tampung aspirasi jaga kepercayaan publik (Skor 5). Pilihan C skor 4, lapor ke pimpinan tindakan bertanggung jawab namun tak redam emosi warga langsung. Pilihan E skor 3, edukasi manfaat lumayan, tapi tak jawab soal alasan biaya. Pilihan A skor 2, berlindung di balik aturan memicu ketidakpuasan. Pilihan D skor 1, menolak tugas atasan tidak profesional."
+            },
+            {
+                id: 80,
+                text: "Anda memulai sebuah bisnis kecil untuk mengisi waktu luang. Namun, bisnis tersebut berkembang pesat dalam waktu singkat, dan Anda merasa belum memiliki pengetahuan atau pengalaman yang cukup untuk mengelolanya secara profesional. Sikap Anda adalah... (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Merekrut orang yang berpengalaman dalam manajemen bisnis untuk membantu mengelola usaha Anda.", score: 4 },
+                    { id: "B", text: "Melanjutkan pengelolaan bisnis seperti biasa sambil belajar dari pengalaman.", score: 3 },
+                    { id: "C", text: "Menunda ekspansi bisnis sampai Anda yakin memiliki keterampilan yang cukup untuk mengelolanya.", score: 2 },
+                    { id: "D", text: "Mencari pelatihan atau kursus singkat tentang manajemen bisnis untuk meningkatkan kemampuan Anda.", score: 5 },
+                    { id: "E", text: "Menjual sebagian bisnis kepada pihak lain agar beban pengelolaan berkurang.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah D karena cari pelatihan menunjukkan inisiatif kembangkan diri sebagai owner agar bisnis profesional (Skor 5). Pilihan A skor 4, delegasi baik tapi bisa terkendala biaya jika bisnis baru tumbuh. Pilihan B skor 3, 'learning by doing' cukup berisiko jika bisnis makin kompleks. Pilihan C skor 2, menunda berarti hilangkan momentum peluang emas. Pilihan E skor 1, menjual bisnis adalah sikap pesimis."
+            },
+            {
+                id: 81,
+                text: "Anda adalah petugas administrasi di sebuah rumah sakit yang bertanggung jawab mengelola data pasien. Dalam pekerjaannya, Anda harus menjaga kerahasiaan informasi pasien dan memastikan semua proses administrasi berjalan sesuai aturan. Berikut adalah beberapa tindakan yang dapat Anda lakukan untuk menjalankan tanggung jawabnya dengan baik ... (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Mengamankan data pasien dengan baik sambil melaporkan kepada atasan jika menemukan prosedur yang tidak sesuai aturan.", score: 3 },
+                    { id: "B", text: "Membagikan informasi pasien kepada rekan kerja tanpa persetujuan untuk mempercepat proses pelayanan.", score: 1 },
+                    { id: "C", text: "Menyimpan data digital secara aman tetapi membiarkan dokumen fisik diletakkan sembarangan di meja kerja.", score: 2 },
+                    { id: "D", text: "Menyelesaikan pengelolaan data pasien sesuai prioritas sambil memastikan tidak ada informasi yang tertinggal atau terabaikan.", score: 4 },
+                    { id: "E", text: "Memastikan data pasien disimpan dengan aman, diinput secara teliti, dan hanya diakses oleh pihak yang berwenang sesuai aturan.", score: 5 }
+                ],
+                pembahasan: "Pilihan terbaik adalah E karena mencakup penyimpanan aman, ketelitian input, dan kontrol akses ketat, wujud profesionalisme tertinggi kelola data (Skor 5). Pilihan D skor 4, efisien sesuai prioritas namun aspek sekuriti kurang ditegaskan. Pilihan A skor 3, lapor aturan bagus tapi tidak proaktif dalam rutinitas sekuriti datanya. Pilihan C skor 2, abai pada data fisik sangat fatal. Pilihan B skor 1, pelanggaran fatal kerahasiaan rekam medis pasien."
+            },
+            {
+                id: 82,
+                text: "Anda bekerja di sebuah divisi dengan tuntutan kerja yang sangat tinggi, dan beberapa rekan kerja mulai menunjukkan tanda-tanda kelelahan. Anda merasa bahwa kondisi ini dapat memengaruhi produktivitas tim jika tidak segera ditangani. Sebagai bagian dari tim, apa langkah terbaik yang Anda ambil... (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Mengusulkan kepada atasan untuk mengevaluasi beban kerja dan mempertimbangkan penyesuaian target tim.", score: 5 },
+                    { id: "B", text: "Mengajak rekan kerja untuk bersama-sama berbicara dengan atasan mengenai kondisi yang dihadapi.", score: 4 },
+                    { id: "C", text: "Memberikan dukungan moral kepada rekan kerja dengan menyemangati mereka untuk menyelesaikan tugas yang ada.", score: 3 },
+                    { id: "D", text: "Memprioritaskan tugas-tugas pribadi Anda dan membiarkan rekan kerja menyelesaikan tugas mereka sendiri.", score: 2 },
+                    { id: "E", text: "Mengajukan cuti untuk sementara waktu agar tidak ikut terbebani dengan kondisi tim.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah A karena berani usul evaluasi ke atasan itu proaktif atasi akar masalah beban kerja (Skor 5). Pilihan B skor 4, bagus ada unsur kolaborasi ngadep atasan tapi bisa terkesan demonstrasi jika tak hati-hati. Pilihan C skor 3, dukungan moral baik namun tak kurangi capek fisik rekan-rekan. Pilihan D skor 2, sikap individualistik egois. Pilihan E skor 1, lepas tanggung jawab dengan kabur ambil cuti."
+            },
+            {
+                id: 83,
+                text: "Divisi IT di kantor Anda mengalami penurunan kinerja karena anggotanya merasa kurang memiliki keahlian dalam teknologi terbaru yang diperlukan untuk menyelesaikan proyek dengan baik. Sebagai pemimpin divisi, apa langkah terbaik yang Anda ambil untuk mengatasi masalah ini? (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Mengganti beberapa anggota tim dengan yang lebih ahli agar proyek dapat selesai lebih cepat.", score: 1 },
+                    { id: "B", text: "Memberikan arahan teknis dan panduan langsung kepada tim untuk memperbaiki hasil pekerjaan mereka.", score: 4 },
+                    { id: "C", text: "Membagi tugas secara lebih spesifik agar anggota tim dapat fokus pada bagian yang lebih sesuai dengan keahlian mereka.", score: 3 },
+                    { id: "D", text: "Mengawasi pekerjaan tim secara ketat untuk memastikan tidak ada kesalahan teknis.", score: 2 },
+                    { id: "E", text: "Menyediakan pelatihan teknologi terbaru untuk meningkatkan kemampuan tim sesuai kebutuhan proyek.", score: 5 }
+                ],
+                pembahasan: "Pilihan terbaik adalah E karena pelatihan atasi akar masalah 'kurang ahli teknologi baru', tunjukkan leader yg support growth tim (Skor 5). Pilihan B skor 4, panduan teknis bantu sementara walau skill belum naik merata. Pilihan C skor 3, bagi tugas spesifik menambal bolong tapi skill tak upgrade. Pilihan D skor 2, pengawasan justru bikin stres tak solutif. Pilihan A skor 1, pecat tim langsung merusak moral dan loyalitas."
+            },
+            {
+                id: 84,
+                text: "Seorang rekan sekantor mengajak Anda untuk bergabung dalam sebuah proyek luar yang menjanjikan penghasilan tambahan. Namun, proyek tersebut memiliki risiko benturan kepentingan dengan pekerjaan utama Anda di kantor saat ini. Sikap Anda adalah...... (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Menolak tawaran tersebut karena dapat mengganggu tanggung jawab pekerjaan utama Anda.", score: 5 },
+                    { id: "B", text: "Menerima tawaran tersebut dengan catatan pekerjaan utama tetap menjadi prioritas.", score: 3 },
+                    { id: "C", text: "Meminta izin kepada atasan sebelum memutuskan untuk bergabung dalam proyek luar tersebut.", score: 4 },
+                    { id: "D", text: "Bergabung dalam proyek luar tanpa memberitahu atasan karena ini adalah kesempatan pribadi Anda.", score: 2 },
+                    { id: "E", text: "Membujuk rekan untuk menjalankan proyek tersebut di luar pengawasan kantor agar tidak terdeteksi.", score: 1 }
+                ],
+                pembahasan: "Pilihan terbaik adalah A karena tolak tawaran hindari conflict of interest (benturan kepentingan) itu wujud integritas tertinggi ASN (Skor 5). Pilihan C skor 4, lapor atasan menunjukkan transparansi. Pilihan B skor 3, terima walau prioritas kantor, risiko konflik tetap ada. Pilihan D skor 2, diam-diam kerja sampingan potensial langgar disiplin. Pilihan E skor 1, tidak etis dan mengajak kolusi."
+            },
+            {
+                id: 85,
+                text: "Anda ditugaskan oleh atasan untuk membuat laporan presentasi mengenai hasil penjualan perusahaan dalam format yang menarik dan profesional. Namun, Anda merasa kurang menguasai teknik desain presentasi. Sikap Anda adalah... (Profesionalisme)",
+                options: [
+                    { id: "A", text: "Meminta rekan kerja yang lebih ahli untuk membantu menyelesaikan tugas ini.", score: 4 },
+                    { id: "B", text: "Menginformasikan kepada atasan bahwa Anda tidak memiliki keahlian tersebut dan meminta tugas lain.", score: 1 },
+                    { id: "C", text: "Menyelesaikan laporan dengan format sederhana tanpa menggunakan teknik desain tambahan.", score: 3 },
+                    { id: "D", text: "Mempelajari tutorial desain presentasi secara mandiri untuk meningkatkan kemampuan Anda.", score: 5 },
+                    { id: "E", text: "Menunggu arahan lebih lanjut dari atasan tentang bagaimana menyelesaikan laporan.", score: 2 }
+                ],
+                pembahasan: "Pilihan terbaik adalah D karena belajar mandiri via tutorial tunjukkan inisiatif dan continuous learning (Skor 5). Pilihan A skor 4, minta bantu rekan bagus untuk selesaikan cepat walau diri sendiri tak berkembang. Pilihan C skor 3, kerja selesai tapi hasil pas-pasan tak penuhi ekspektasi awal. Pilihan E skor 2, nunggu disuapin instruksi pasif sekali. Pilihan B skor 1, menolak tugas wujud karyawan tak mau maju."
+            }
+        ];
+
+        // State variables
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // { index: 'A', ... }
+        let timerInterval = null;
+        let totalTimeSeconds = 0;
+        let timeRemaining = 0;
+
+        // UI Elements
+        const setupView = document.getElementById('setup-view');
+        const quizView = document.getElementById('quiz-view');
+        const resultView = document.getElementById('result-view');
+        const reviewView = document.getElementById('review-view');
+        
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnSubmit = document.getElementById('btn-submit');
+        const timerDisplay = document.getElementById('timer-display');
+        const timeText = document.getElementById('time-text');
+        const confirmModal = document.getElementById('confirm-modal');
+
+        // Initialize Option IDs for rendering
+        const alphabet = ['A', 'B', 'C', 'D', 'E'];
+
+        function startQuiz() {
+            const minutes = parseInt(document.getElementById('time-input').value);
+            if (isNaN(minutes) || minutes < 1) {
+                alert("Mohon masukkan waktu minimal 1 menit.");
+                return;
+            }
+
+            totalTimeSeconds = minutes * 60;
+            timeRemaining = totalTimeSeconds;
+            
+            setupView.classList.add('hidden');
+            quizView.classList.remove('hidden');
+            timerDisplay.classList.remove('hidden');
+
+            renderQuestion();
+            startTimer();
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Waktu Habis! Jawaban Anda akan otomatis dikumpulkan.");
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            const s = (timeRemaining % 60).toString().padStart(2, '0');
+            timeText.textContent = `${m}:${s}`;
+            
+            if(timeRemaining < 60) {
+                timerDisplay.classList.remove('bg-blue-700', 'border-blue-400');
+                timerDisplay.classList.add('bg-red-600', 'border-red-400', 'animate-pulse');
+            }
+        }
+
+        function renderQuestion() {
+            const q = questionsData[currentQuestionIndex];
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            
+            // Highlight specific words if needed, but here we just render text
+            questionTextEl.textContent = q.text;
+            
+            optionsContainerEl.innerHTML = '';
+            
+            q.options.forEach(opt => {
+                const isSelected = userAnswers[currentQuestionIndex] === opt.id;
+                
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full text-left p-4 rounded-lg border-2 mb-2 flex items-start ${isSelected ? 'selected-option' : 'border-gray-200 hover:border-blue-300 bg-white'}`;
+                btn.onclick = () => selectOption(opt.id);
+                
+                btn.innerHTML = `
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full border-2 ${isSelected ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 text-gray-500'} flex items-center justify-center font-bold mr-3 mt-0.5">
+                        ${opt.id}
+                    </div>
+                    <div class="text-base text-gray-700 mt-1">${opt.text}</div>
+                `;
+                
+                optionsContainerEl.appendChild(btn);
+            });
+
+            // Update Nav Buttons
+            btnPrev.disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === questionsData.length - 1) {
+                btnNext.classList.add('hidden');
+                btnSubmit.classList.remove('hidden');
+            } else {
+                btnNext.classList.remove('hidden');
+                btnSubmit.classList.add('hidden');
+            }
+        }
+
+        function selectOption(optId) {
+            userAnswers[currentQuestionIndex] = optId;
+            renderQuestion(); // Re-render to show selection
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questionsData.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        function confirmSubmit() {
+            // Check if all answered
+            const answeredCount = Object.keys(userAnswers).length;
+            if (answeredCount < questionsData.length) {
+                alert(`Anda baru menjawab ${answeredCount} dari ${questionsData.length} soal. Silakan selesaikan jika waktu masih ada.`);
+            }
+            confirmModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            confirmModal.classList.add('hidden');
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            closeModal();
+            
+            // Calculate Score
+            let totalScore = 0;
+            questionsData.forEach((q, idx) => {
+                const userChoiceId = userAnswers[idx];
+                if (userChoiceId) {
+                    const chosenOpt = q.options.find(o => o.id === userChoiceId);
+                    if (chosenOpt) totalScore += chosenOpt.score;
+                }
+            });
+
+            // Calculate Time
+            const timeSpentSeconds = totalTimeSeconds - timeRemaining;
+            const avgTime = (timeSpentSeconds / questionsData.length).toFixed(1);
+
+            // Display Results
+            document.getElementById('final-score').textContent = totalScore;
+            document.getElementById('avg-time').textContent = avgTime;
+            
+            quizView.classList.add('hidden');
+            timerDisplay.classList.add('hidden');
+            resultView.classList.remove('hidden');
+        }
+
+        function showReview() {
+            resultView.classList.add('hidden');
+            reviewView.classList.remove('hidden');
+            
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = '';
+            
+            questionsData.forEach((q, idx) => {
+                const userChoiceId = userAnswers[idx];
+                let userScore = 0;
+                
+                // Cari opsi terbaik (skor 5)
+                const bestOption = q.options.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+                
+                // Cari opsi user
+                const userOpt = q.options.find(o => o.id === userChoiceId);
+                if(userOpt) userScore = userOpt.score;
+
+                const isPerfect = userScore === 5;
+
+                let optionsHtml = '';
+                q.options.forEach(opt => {
+                    let optClass = "border-gray-200 bg-white";
+                    let iconHtml = "";
+                    let scoreBadgeHtml = `<span class="float-right text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Poin: ${opt.score}</span>`;
+                    
+                    if (opt.id === bestOption.id) {
+                        // Ini jawaban terbaik (Poin 5)
+                        optClass = "correct-option border-2";
+                        iconHtml = '<i class="fas fa-check-circle text-green-600 ml-2"></i>';
+                        scoreBadgeHtml = `<span class="float-right text-xs bg-green-200 text-green-800 px-2 py-1 rounded font-bold">Poin: 5 (Terbaik)</span>`;
+                    } else if (opt.id === userChoiceId && !isPerfect) {
+                        // Pilihan user tapi bukan poin 5 (Merah / Salah secara konteks max skor)
+                        optClass = "wrong-option border-2";
+                        iconHtml = '<i class="fas fa-times-circle text-red-500 ml-2"></i>';
+                        scoreBadgeHtml = `<span class="float-right text-xs bg-red-200 text-red-800 px-2 py-1 rounded">Poin: ${opt.score} (Pilihan Anda)</span>`;
+                    } else if (opt.id === userChoiceId && isPerfect) {
+                         scoreBadgeHtml = `<span class="float-right text-xs bg-green-200 text-green-800 px-2 py-1 rounded font-bold">Poin: 5 (Pilihan Anda)</span>`;
+                    }
+
+                    optionsHtml += `
+                        <div class="p-3 border rounded-lg mb-2 ${optClass} text-sm">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start">
+                                    <span class="font-bold mr-2 mt-0.5">${opt.id}.</span> 
+                                    <span>${opt.text} ${iconHtml}</span>
+                                </div>
+                                ${scoreBadgeHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const badgeClass = isPerfect ? 'bg-green-100 text-green-800' : (userChoiceId ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                const badgeText = isPerfect ? 'Poin Maksimal (5)' : (userChoiceId ? `Poin: ${userScore}` : 'Tidak Dijawab');
+
+                const itemHtml = `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="p-5 border-b border-gray-100">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-bold text-lg text-blue-700">Soal No. ${idx + 1}</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${badgeText}</span>
+                            </div>
+                            <p class="text-gray-800 mb-4 text-justify">${q.text}</p>
+                            <div class="space-y-1">
+                                ${optionsHtml}
+                            </div>
+                        </div>
+                        
+                        <!-- Toggle Pembahasan -->
+                        <div class="bg-gray-50 border-t border-gray-200">
+                            <button onclick="togglePembahasan(${idx})" class="w-full px-5 py-3 text-left font-semibold text-blue-600 hover:bg-blue-50 transition flex justify-between items-center focus:outline-none">
+                                <span><i class="fas fa-lightbulb mr-2 text-yellow-500"></i> Lihat Pembahasan</span>
+                                <i id="icon-bahas-${idx}" class="fas fa-chevron-down text-gray-400"></i>
+                            </button>
+                            <div id="bahas-${idx}" class="hidden px-5 py-4 text-sm text-gray-700 leading-relaxed border-t border-blue-100 bg-blue-50/50">
+                                ${q.pembahasan}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                reviewContainer.innerHTML += itemHtml;
+            });
+        }
+
+        function togglePembahasan(idx) {
+            const bahasDiv = document.getElementById(`bahas-${idx}`);
+            const icon = document.getElementById(`icon-bahas-${idx}`);
+            
+            if (bahasDiv.classList.contains('hidden')) {
+                bahasDiv.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                bahasDiv.classList.add('hidden');
+                icon.classList.add('fa-chevron-down');
+                icon.classList.remove('fa-chevron-up');
+            }
+        }
+    </script>
+</body>
+</html>
